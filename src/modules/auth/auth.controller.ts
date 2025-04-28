@@ -3,6 +3,8 @@ import { RegisterDto } from './DTOs/register.dto';
 import { AuthServiceInterface } from './interfaces/service/auth.service.interface';
 import { RegisterResponseDto } from './DTOs/register.response.dto';
 import { CustomValidation } from '../../common/decorators/custom-validation.filter';
+import { LoginDto } from './DTOs/login.dto';
+import { LoginResponseDto } from './DTOs/login.response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,6 +22,17 @@ export class AuthController {
     return {
       statusCode: HttpStatus.CREATED,
       message: response.message,
+    };
+  }
+
+  @Post('/login')
+  @CustomValidation()
+  async login(@Body() loginRequest: LoginDto): Promise<LoginResponseDto> {
+    const response = await this.authService.handleLogin(loginRequest);
+    return {
+      statusCode: HttpStatus.ACCEPTED,
+      message: response.message,
+      access_token: response.access_token,
     };
   }
 }
