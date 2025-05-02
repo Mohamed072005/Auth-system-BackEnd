@@ -5,13 +5,13 @@ import { UserModule } from '../user/user.module';
 import { PasswordService } from './services/password.service';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
+import { HashService } from '../../common/services/hash.service';
 
 @Module({
   imports: [
     UserModule,
     JwtModule.register({
       global: false,
-      secret: jwtConstants.secret,
     }),
   ],
   controllers: [AuthController],
@@ -23,6 +23,10 @@ import { jwtConstants } from './constants';
     {
       provide: 'PasswordServiceInterface',
       useClass: PasswordService,
+    },
+    {
+      provide: 'HashServiceInterface',
+      useClass: HashService,
     },
   ],
 })

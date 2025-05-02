@@ -3,7 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
-  NotFoundException,
+  NotFoundException, UnauthorizedException,
 } from '@nestjs/common';
 import { AuthServiceInterface } from '../interfaces/service/auth.service.interface';
 import { RegisterDto } from '../DTOs/register.dto';
@@ -12,6 +12,10 @@ import { PasswordServiceInterface } from '../interfaces/service/password.service
 import { LoginDto } from '../DTOs/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserServiceInterface } from '../../user/interfaces/service/user.service.interface';
+import { jwtConstants } from '../constants';
+import { Response } from 'express';
+import { toMongoObjectIdTransformer } from '../../../common/transformers/to-mongo-object-id.transformer';
+import { HashServiceInterface } from '../../../common/interfaces/services/hash.service.interface';
 
 @Injectable()
 export class AuthService implements AuthServiceInterface {
@@ -22,6 +26,8 @@ export class AuthService implements AuthServiceInterface {
     private passwordService: PasswordServiceInterface,
     @Inject('UserServiceInterface')
     private readonly userService: UserServiceInterface,
+    @Inject('HashServiceInterface')
+    private readonly hashService: HashServiceInterface,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -64,15 +70,9 @@ export class AuthService implements AuthServiceInterface {
 
     const payload = { user_name: user.name, sub: user._id };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: '15m',
-    });
+    const accessToken = await this.generateToken(payload, jwtConstants.accessTokenSecret, '15m');
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '7d',
-    });
+    const refreshToken = await this.generateToken(payload, jwtConstants.refreshTokenSecret, '7d');
 
     await this.userService.setUserRefreshToken(refreshToken, user._id);
 
@@ -81,5 +81,20 @@ export class AuthService implements AuthServiceInterface {
       access_token: accessToken,
       message: 'Login successfully',
     };
+  }
+
+  async refreshTokens(refreshToken: string, user_id: string, response: Response): Promise<void> {
+    const userObjectId = toMongoObjectIdTransformer(user_id);
+    const user = await this.userRepository.getUserById(userObjectId);
+    if (!user) throw new UnauthorizedException('User not found');
+    const verifyRefreshToken = await this.hashService.compareClaims(refreshToken, user.refresh_token);
+    if (!verifyRefreshToken) throw new UnauthorizedException('refresh token is invalid');
+  }
+  
+  private async generateToken(payload: any, secret: string, expiresIn: string) {
+    return await this.jwtService.signAsync(payload, {
+      secret: secret,
+      expiresIn: expiresIn,
+    });
   }
 }

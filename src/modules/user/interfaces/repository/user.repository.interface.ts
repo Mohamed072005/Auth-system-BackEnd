@@ -11,4 +11,6 @@ export interface UserRepositoryInterface {
     user_id: Types.ObjectId,
     propertiesForUpdate: Record<string, string>,
   ): Promise<void>;
+
+  getUserById(user_id: Types.ObjectId): Promise<UserDocument>;
 }

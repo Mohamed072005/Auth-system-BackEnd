@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 export default () => ({
-  mongoURI: process.env.MONGODB_URI || 'mongodb://localhost:27017/auth-system',
+  mongoURI: process.env.MONGODB_URI,
 });

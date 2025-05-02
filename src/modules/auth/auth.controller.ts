@@ -1,10 +1,13 @@
-import { Body, Controller, HttpStatus, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Inject, Post, Request, Response, UseInterceptors } from '@nestjs/common';
 import { RegisterDto } from './DTOs/register.dto';
 import { AuthServiceInterface } from './interfaces/service/auth.service.interface';
 import { RegisterResponseDto } from './DTOs/register.response.dto';
 import { CustomValidation } from '../../common/decorators/custom-validation.filter';
 import { LoginDto } from './DTOs/login.dto';
 import { LoginResponseDto } from './DTOs/login.response.dto';
+import { GetUserInfo } from '../../common/decorators/get-user-info.decorator';
+import { UserInfo } from '../../common/types/user-info.type';
+import { ClearRefreshTokenInterceptor } from '../../common/interceptors/clear-refresh-token.interceptor';
 
 @Controller('auth')
 export class AuthController {
@@ -34,5 +37,15 @@ export class AuthController {
       message: response.message,
       access_token: response.access_token,
     };
+  }
+
+  @Get('/refresh')
+  @UseInterceptors(ClearRefreshTokenInterceptor)
+  async refreshToken(
+    @Request() req,
+    @Response({ passthrough: true }) res,
+    @GetUserInfo() userInfo: UserInfo,
+  ) {
+    const refreshToken = req.cookies['refresh_token'];
   }
 }

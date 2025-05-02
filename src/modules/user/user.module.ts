@@ -18,8 +18,11 @@ import { UserService } from './user.service';
       provide: 'UserServiceInterface',
       useClass: UserService,
     },
-    HashService,
+    {
+      provide: 'HashServiceInterface',
+      useClass: HashService,
+    },
   ],
-  exports: ['UserRepositoryInterface', 'UserServiceInterface'],
+  exports: ['UserRepositoryInterface', 'UserServiceInterface', "HashServiceInterface"],
 })
 export class UserModule {}

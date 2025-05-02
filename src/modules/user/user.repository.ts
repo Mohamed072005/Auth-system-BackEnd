@@ -50,7 +50,18 @@ export class UserRepository implements UserRepositoryInterface {
       }
 
       throw new HttpException(
-        `Failed to create pharmacy: ${err.message}`,
+        `Failed to update the refresh token: ${err.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getUserById(user_id: Types.ObjectId): Promise<UserDocument> {
+    try {
+      return await this.userModel.findOne({ _id: user_id }).exec();
+    }catch (err: any) {
+      throw new HttpException(
+        'Failed to get user',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
